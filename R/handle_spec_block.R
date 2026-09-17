@@ -38,18 +38,18 @@ handle_spec_block.default <- function(x, ...) {
 }
 
 #' Functions to parse code blocks
-#' 
-#' Most of the basic blocks are listed in this help topic.  
-#' But see also [PKMODEL()] which has more-involved 
+#'
+#' Most of the basic blocks are listed in this help topic.
+#' But see also [PKMODEL()] which has more-involved
 #' options and is documented separately.
-#' 
+#'
 #' @param x data
 #' @param env parse environment
 #' @param pos block position
 #' @param annotated logical
 #' @param object the name of an object in `ENV`
 #' @param as_object indicates that object code is being provided
-#' @param covariates logical; mark as covariates and potentially required 
+#' @param covariates logical; mark as covariates and potentially required
 #' data input
 #' @param input logical; mark as potentially required data input
 #' @param tag space or comma-separated user-defined tags for the parameter block
@@ -62,26 +62,26 @@ handle_spec_block.default <- function(x, ...) {
 #' @param fill deprecated; not used
 #' @param number number of compartments to create
 #' @param ... passed
-#' 
+#'
 #' @details
-#' 
+#'
 #' When using `object` or `as_object` populate the block contents, the following
 #' types are required
-#' 
+#'
 #' - `PARAM`: a named list
 #' - `INIT` : a named list
 #' - `THETA` : a numeric vector; names are ignored
 #' - `CMT`: a character vector
-#' - `OMEGA`: matrix; set rownames on the matrix to create ETA labels; setting 
-#'   rownames is the only way to specify `labels` when working through the 
+#' - `OMEGA`: matrix; set rownames on the matrix to create ETA labels; setting
+#'   rownames is the only way to specify `labels` when working through the
 #'   `object` or `as_object` directives
-#' - `SIGMA`: matrix; set rownames on the matrix to create EPS labels; setting 
-#'   rownames is the only way to specify `labels` when working through the 
+#' - `SIGMA`: matrix; set rownames on the matrix to create EPS labels; setting
+#'   rownames is the only way to specify `labels` when working through the
 #'   `object` or `as_object` directives
-#' 
+#'
 #' @name BLOCK_PARSE
 #' @rdname BLOCK_PARSE
-#' 
+#'
 #' @md
 #' @seealso [PKMODEL()]
 NULL
@@ -94,19 +94,19 @@ handle_spec_block.specPARAM <- function(x, ...) {
 }
 
 #' @rdname BLOCK_PARSE
-PARAM <- function(x, 
-                  env, 
-                  pos = 1, 
+PARAM <- function(x,
+                  env,
+                  pos = 1,
                   annotated = FALSE,
-                  object = NULL, 
+                  object = NULL,
                   as_object = FALSE,
                   covariates = FALSE,
                   input = FALSE,
                   tag = NULL, ...) {
-  
+
   if(is.character(object)) {
     if(isTRUE(as_object)) {
-      wstop("cannot have both @object and @as_object in a block")  
+      wstop("cannot have both @object and @as_object in a block")
     }
     x <- object
     as_object <- TRUE
@@ -115,20 +115,20 @@ PARAM <- function(x,
     check_block_data(x, env, pos)
     envir <- list()
   }
-  
+
   if(as_object) {
     x <- evaluate_at_code(
-      x, c("list", "parameter_list"), 
-      "PARAM", 
-      pos, 
-      envir, 
+      x, c("list", "parameter_list"),
+      "PARAM",
+      pos,
+      envir,
       named = TRUE
     )
     env[["param"]][[pos]] <- x
     save_param_tag(env, names(x), covariates, input, tag)
     return(NULL)
   }
-  
+
   if(annotated) {
     context <- env[["incoming_names"]][pos]
     context <- as.character(glue("parse annotated parameter block ({context})"))
@@ -136,7 +136,7 @@ PARAM <- function(x,
     env[["param"]][[pos]] <- x <- l[["v"]]
     env[["annot"]][[pos]] <- l[["an"]]
   } else {
-    x <- tolist(x,envir=env$ENV) 
+    x <- tolist(x,envir=env$ENV)
     if(length(x) > 0 & !is_named(x)) {
       msg <- " invalid model specification
        Block no: {pos}
@@ -147,9 +147,9 @@ PARAM <- function(x,
     }
     env[["param"]][[pos]] <- x
   }
-  
+
   save_param_tag(env, names(x), covariates, input, tag)
-  
+
   return(NULL)
 }
 
@@ -157,15 +157,15 @@ save_param_tag <- function(env, pars, covariates, input, tag) {
   if(isTRUE(covariates)) {
     env[["covariates"]] <- c(env[["covariates"]], pars)
     tagdf <- data.frame(
-      name = pars, 
-      tag = "covariates", 
+      name = pars,
+      tag = "covariates",
       stringsAsFactors = FALSE
     )
     tagdf <- rbind(env[["param_tag"]], tagdf)
     env[["param_tag"]] <- unique(tagdf)
   }
   if(isTRUE(input)) {
-    tag <- c("input", tag)  
+    tag <- c("input", tag)
   }
   if(is.character(tag) && length(tag) > 0) {
     tag <- cvec_cs(tag)
@@ -182,7 +182,7 @@ handle_spec_block.specINPUT <- function(x, env, ...) {
   o <- scrape_opts(x, envir = env$ENV, ...)
   o$pos <- o$env <- o$class <- o$input <- NULL
   o <- c(o, attributes(x), list(env = env, input = TRUE))
-  do.call(PARAM, o) 
+  do.call(PARAM, o)
 }
 
 # FIXED ----------------------------------------------------------------
@@ -194,9 +194,9 @@ handle_spec_block.specFIXED <- function(x, ...) {
 
 #' @rdname BLOCK_PARSE
 FIXED <- function(x, env, pos = 1, annotated = FALSE, ...) {
-  
+
   check_block_data(x, env, pos)
-  
+
   if(annotated) {
     context <- env[["incoming_names"]][pos]
     context <- glue("parse annotated fixed block ({context})")
@@ -204,10 +204,10 @@ FIXED <- function(x, env, pos = 1, annotated = FALSE, ...) {
     env[["fixed"]][[pos]] <- l[["v"]]
     env[["annot"]][[pos]] <- l[["an"]]
   } else {
-    x <- tolist(x,envir=env$ENV) 
+    x <- tolist(x,envir=env$ENV)
     env[["fixed"]][[pos]] <- x
   }
-  
+
   return(NULL)
 }
 
@@ -219,51 +219,51 @@ handle_spec_block.specTHETA <- function(x, ...) {
 }
 
 #' @rdname BLOCK_PARSE
-THETA <- function(x, 
-                  env, 
-                  pos = 1, 
-                  annotated = FALSE, 
-                  object = NULL, 
-                  as_object = FALSE, 
-                  name = "THETA", 
+THETA <- function(x,
+                  env,
+                  pos = 1,
+                  annotated = FALSE,
+                  object = NULL,
+                  as_object = FALSE,
+                  name = "THETA",
                   fill = NULL, ...) {
-  
+
   if(!is.null(fill)) {
     x <- fill
     as_object <- TRUE
   }
-  
+
   if(is.character(object)) {
     if(isTRUE(as_object)) {
-      wstop("cannot have both @object and @as_object in a block")  
+      wstop("cannot have both @object and @as_object in a block")
     }
-    x <- object  
+    x <- object
     as_object <- TRUE
     envir <- env$ENV
   } else {
     check_block_data(x, env, pos)
     envir <- list()
   }
-  
+
   if(isTRUE(as_object)) {
     x <- evaluate_at_code(x, c("numeric", "integer"), "THETA", pos, envir)
   }
-  
+
   if(annotated) {
     l <- parse_annot(x, noname = TRUE, block = "THETA", envir = env$ENV)
     x <- as.numeric(l[["v"]])
   } else {
     x <- tolist(paste0(cvec_cs(x),collapse=','), envir = env$ENV)
   }
-  
+
   x <- x[!is.na(x)]
-  
+
   if(length(x)==0) name <- character(0)
-  
+
   names(x) <- paste0(name, seq_along(x))
-  
+
   env[["param"]][[pos]] <- x
-  
+
   return(NULL)
 }
 
@@ -275,31 +275,31 @@ handle_spec_block.specINIT <- function(x, ...) {
 }
 
 #' @rdname BLOCK_PARSE
-INIT <- function(x, 
-                 env, 
-                 pos = 1, 
-                 annotated = FALSE, 
-                 object = NULL, 
+INIT <- function(x,
+                 env,
+                 pos = 1,
+                 annotated = FALSE,
+                 object = NULL,
                  as_object = FALSE, ...) {
-  
+
   if(is.character(object)) {
     if(isTRUE(as_object)) {
-      wstop("cannot have both @object and @as_object in a block")  
+      wstop("cannot have both @object and @as_object in a block")
     }
     x <- object
     as_object <- TRUE
     envir <- env$ENV
   } else {
-    check_block_data(x, env, pos)  
+    check_block_data(x, env, pos)
     envir <- list()
   }
-  
+
   if(as_object) {
     x <- evaluate_at_code(x, "list", "INIT", pos, envir, named = TRUE)
     env[["init"]][[pos]] <- x
     return(NULL)
   }
-  
+
   if(annotated) {
     context <- env[["incoming_names"]][pos]
     context <- glue("parse annotated init block ({context})")
@@ -307,7 +307,7 @@ INIT <- function(x,
     env[["init"]][[pos]] <- l[["v"]]
     env[["annot"]][[pos]] <- l[["an"]]
   } else {
-    x <- tolist(x,envir=env$ENV) 
+    x <- tolist(x,envir=env$ENV)
     if(length(x) > 0 & !is_named(x)) {
       msg <- " invalid model specification
        Block no: {pos}
@@ -327,37 +327,37 @@ handle_spec_block.specCMT <- function(x, ...) {
 }
 
 #' @rdname BLOCK_PARSE
-CMT <- function(x, 
-                env, 
-                pos = 1, 
-                annotated = FALSE, 
-                object = NULL, 
+CMT <- function(x,
+                env,
+                pos = 1,
+                annotated = FALSE,
+                object = NULL,
                 as_object = FALSE,
-                number = NULL, 
+                number = NULL,
                 prefix = "A", ...) {
-  
+
   if(is.numeric(number)) {
     if(!is.character(prefix)) {
-      stop("compartment prefix nust be character", call. = FALSE)  
+      stop("compartment prefix nust be character", call. = FALSE)
     }
     init <- as.list(vector(mode = "numeric", length = number))
     names(init) <- paste0(prefix, seq(number))
     env[["init"]][[pos]] <- init
     return(NULL)
   }
-  
+
   if(is.character(object)) {
     if(isTRUE(as_object)) {
-      wstop("cannot have both @object and @as_object in a block")  
+      wstop("cannot have both @object and @as_object in a block")
     }
-    x <- object 
+    x <- object
     as_object <- TRUE
     envir <- env$ENV
   } else {
     check_block_data(x, env, pos)
     envir <- list()
   }
-  
+
   if(as_object) {
     x <- evaluate_at_code(x, "character", "CMT", pos, envir)
     x <- setNames(rep(0, length(x)), x)
@@ -368,7 +368,7 @@ CMT <- function(x,
     context <- env[["incoming_names"]][pos]
     context <- glue("parse annotated compartment block ({context})")
     l <- parse_annot(
-      x, novalue = TRUE, block = "CMT", envir = env$ENV, 
+      x, novalue = TRUE, block = "CMT", envir = env$ENV,
       context = context
     )
     env[["annot"]][[pos]] <- l[["an"]]
@@ -376,7 +376,7 @@ CMT <- function(x,
   } else {
     x <- cvec_cs(x)
   }
-  
+
   l <- rep(0,length(x))
   names(l) <- x
   env[["init"]][[pos]] <- as.list(l)
@@ -399,17 +399,17 @@ handle_spec_block.specCAPTURE <- function(x, ...) {
 }
 
 #' @param etas allows for block capture of ETAs in the simulated output;
-#' this should be R code that will get parsed and evaluated; the result should 
+#' this should be R code that will get parsed and evaluated; the result should
 #' be an integer-like vector which identifies which ETAs will be captured.
-#' 
+#'
 #' @rdname BLOCK_PARSE
-CAPTURE <- function(x, env, pos = 1, annotated = FALSE, 
+CAPTURE <- function(x, env, pos = 1, annotated = FALSE,
                     etas = NULL, ...) {
   if(annotated) {
     context <- env[["incoming_names"]][pos]
     context <- glue("parse annotated capture block ({context})")
     l <- parse_annot(
-      x, novalue = TRUE, block = "CAPTURE", envir = env$ENV, 
+      x, novalue = TRUE, block = "CAPTURE", envir = env$ENV,
       context = context
     )
     env[["annot"]][[pos]] <- l[["an"]]
@@ -417,18 +417,18 @@ CAPTURE <- function(x, env, pos = 1, annotated = FALSE,
   } else {
     x <- cvec_cs(x)
   }
-  
+
   if(!is.null(etas)) {
     if(is.logical(etas)) {
-      abort("`etas` must be text, not a logical value.")  
+      abort("`etas` must be text, not a logical value.")
     }
     env[["capture_etas"]] <- c(env[["capture_etas"]], etas)
   } else {
     check_block_data(x, env, pos)
   }
-  
+
   env[["capture"]][[pos]] <- x
-  
+
   return(NULL)
 }
 
@@ -457,20 +457,20 @@ handle_spec_block.specSIGMA <- function(x, ...) {
 #' @rdname BLOCK_PARSE
 HANDLEMATRIX <- function(x,
                          env,
-                         pos = 1, 
+                         pos = 1,
                          annotated = FALSE,
-                         object = NULL, 
+                         object = NULL,
                          as_object = FALSE,
                          name = "...",
                          type = NULL,
-                         oclass = "", 
-                         prefix = "", 
+                         oclass = "",
+                         prefix = "",
                          labels = NULL,
                          unlinked = FALSE, ...) {
-  
+
   if(is.character(object)) {
     if(isTRUE(as_object)) {
-      wstop("cannot have both @object and @as_object in a block")  
+      wstop("cannot have both @object and @as_object in a block")
     }
     x <- object
     as_object <- TRUE
@@ -479,86 +479,86 @@ HANDLEMATRIX <- function(x,
     check_block_data(x, env, pos)
     envir <- list()
   }
-  
+
   anl <- grepl(":",x,fixed=TRUE)
   if(annotated & !as_object) {
     types <- charcount(x[anl],":")
     if(all(types==1)) {
-      unlinked <- TRUE 
+      unlinked <- TRUE
       novalue <- TRUE
     } else if(all(types==2)) {
       unlinked <- FALSE
       novalue <- FALSE
     } else {
       stop(
-        "Ambigious or mixed annotations in ",
+        "Ambiguous or mixed annotations in ",
         paste0("$",toupper(type)),
         call.=FALSE
       )
     }
-    
+
     l <- parse_annot(
       x[anl],
       name_value = FALSE,
       block = toupper(type),
-      envir = env$ENV, 
+      envir = env$ENV,
       novalue = novalue
     )
-    
+
     if(unlinked) {
-      l[["v"]] <- as.numeric(cvec_cs(x[!anl])) 
+      l[["v"]] <- as.numeric(cvec_cs(x[!anl]))
     }
-    
+
     d <- modMATRIX(l[["v"]], context = oclass, ...)
     labels <- l[["an"]][["name"]]
     env[["annot"]][[pos]] <- l[["an"]]
-    
+
     if(unlinked & nrow(d) != length(labels)) {
       stop(
-        "Annotated matrix in unlinked configuration is misspecified", 
+        "Annotated matrix in unlinked configuration is misspecified",
         call. = FALSE
       )
     }
-    
+
   } else {
-    
+
     if(isTRUE(as_object)) {
       expect <- paste0(type, "list")
       expect <- c("matrix", expect)
       d <- evaluate_at_code(x, expect, toupper(type), pos, envir)
       if(is.null(labels)) {
-        labels <- rownames(d)  
+        labels <- rownames(d)
       }
     } else {
       if(any(anl)) x <- x[!anl]
       d <- modMATRIX(x, context = oclass, ...)
     }
   }
-  
+
   if(nrow(d)==0) return(NULL)
-  
+
   if(is.null(labels)) {
     labels <- rep(".", nrow(d))
   } else {
     labels <- paste0(prefix, cvec_cs(labels))
   }
-  
+
   d <- setNames(list(d), name)
-  
+
   x <- create_matlist(d, class = oclass, labels = list(labels))
-  
+
   env[[type]][[pos]] <- x
-  
+
   return(NULL)
 }
 
 # specTABLE --------------------------------------------------------------------
 
-#' @export 
+#' @export
 handle_spec_block.specTABLE <- function(x, env, ...) {
   pos <- attr(x, "pos")
   x <- dump_opts(x)
-  
+
   check_block_data(x, env, pos)
 
   handle_warn_int_div(x, env, pos)
@@ -569,9 +569,9 @@ handle_spec_block.specTABLE <- function(x, env, ...) {
 handle_spec_block.specEVENT <- function(x, env, ...) {
   pos <- attr(x, "pos")
   x <- dump_opts(x)
-  
+
   check_block_data(x, env, pos)
-  
+
   handle_warn_int_div(x, env, pos)
 
 }
@@ -620,22 +620,22 @@ handle_spec_block.specPRED <- function(x, env, ...) {
 
 PRED <- function(x, env, pos, ...) {
   if(any("MAIN"==env[["blocks"]])) {
-    stop("$MAIN not allowed when $PRED is used", call.=FALSE)  
+    stop("$MAIN not allowed when $PRED is used", call.=FALSE)
   }
   if(any("TABLE"==env[["blocks"]])) {
-    stop("$TABLE not allowed when $PRED is used", call.=FALSE)  
+    stop("$TABLE not allowed when $PRED is used", call.=FALSE)
   }
   if(any("PKMODEL"==env[["blocks"]])) {
-    stop("$PKMODEL not allowed when $PRED is used",call.=FALSE)  
+    stop("$PKMODEL not allowed when $PRED is used",call.=FALSE)
   }
   if(any("CMT"==env[["blocks"]])) {
-    stop("$CMT not allowed when $PRED is used",call.=FALSE)  
+    stop("$CMT not allowed when $PRED is used",call.=FALSE)
   }
   if(any("INIT"==env[["blocks"]])) {
-    stop("$INIT not allowed when $PRED is used",call.=FALSE)  
+    stop("$INIT not allowed when $PRED is used",call.=FALSE)
   }
   if(any("ODE"==env[["blocks"]])) {
-    stop("$ODE not allowed when $PRED is used",call.=FALSE)  
+    stop("$ODE not allowed when $PRED is used",call.=FALSE)
   }
   handle_warn_int_div(x, env, pos)
 
@@ -644,36 +644,36 @@ PRED <- function(x, env, pos, ...) {
 # INCLUDE ----------------------------------------------------------------------
 
 #' @export
-handle_spec_block.specINCLUDE <- function(x, env, ...) { 
-  
+handle_spec_block.specINCLUDE <- function(x, env, ...) {
+
   x <- cvec_c_tr(dump_opts(x))
-  
+
   pos <- attr(x, "pos")
-  
+
   check_block_data(x, env, pos)
-  
+
   if(any(grepl("[\"\']", x, perl = TRUE))) {
-    stop("Items in $INCLUDE should not contain quotation marks.",call.=FALSE) 
+    stop("Items in $INCLUDE should not contain quotation marks.",call.=FALSE)
   }
-  
+
   if(any(!grepl("^.*\\.h$", x, perl = TRUE))) {
     warning(
       "$INCLUDE expects file names ending with '.h'",
       call.=FALSE,
       immediate.=TRUE
-    ) 
+    )
   }
-  
+
   x <- file.path(env[["project"]],x)
-  
+
   if(!all(file_exists(x))) {
     message("Attempting to include:\n", paste0(" ", x, collapse = "\n"))
     stop(
       "All header files in $INCLUDE must exist in the project directory.",
       call.=FALSE
-    ) 
+    )
   }
-  
+
   return(x)
 }
 
@@ -687,15 +687,15 @@ form_includes <- function(files) {
 
 #' @export
 handle_spec_block.specPLUGIN <- function(x, env, ...) {
-  
+
   x <- unique(cvec_c_tr(x))
-  
+
   pos <- attr(x,"pos")
-  
+
   check_block_data(x, env, pos)
-  
+
   if(length(x) ==0) return(list())
-  
+
   return(x)
 }
 
@@ -755,14 +755,14 @@ handle_spec_block.specPKMODEL <- function(x, env, ...) {
 #' not including a depot dosing compartment).
 #' @param depot logical indicating whether to add depot compartment.
 #' @param advan ADVAN subroutine number; can be 1, 2, 3, 4, 11, or 12; when
-#' specified, `ncmt` and `depot` are derived from the ADVAN number and the 
-#' appropriate compartments are registered to the model unless specified 
+#' specified, `ncmt` and `depot` are derived from the ADVAN number and the
+#' appropriate compartments are registered to the model unless specified
 #' elsewhere (see **Details**).
 #' @param trans the parameterization for the PK model; must be 1, 2, 4, or 11.
 #' @param env parse environment.
 #' @param pos block position number.
 #' @param ... not used.
-#' 
+#'
 #' @details
 #' When using `$PKMODEL`, certain symbols must be defined in the
 #' model specification depending on the value of `ncmt`, `depot`
@@ -792,12 +792,12 @@ handle_spec_block.specPKMODEL <- function(x, env, ...) {
 #'   distribution (3-cmt)
 #'
 #' When `advan` is supplied by the user, default compartments are registered
-#' in the model unless specified elsewhere. Compartment names are `A1`, `A2`, 
-#' etc. to the number of compartments for the specified `advan`. These 
-#' compartments will _not_ be added in case (1) the model contains a `$CMT` 
-#' block (2) the model contains a `$INIT` block or (3) no compartments have 
-#' been registered in the model at the time `$PKMODEL` is processed (for 
-#' example, via `$YAML`). 
+#' in the model unless specified elsewhere. Compartment names are `A1`, `A2`,
+#' etc. to the number of compartments for the specified `advan`. These
+#' compartments will _not_ be added in case (1) the model contains a `$CMT`
+#' block (2) the model contains a `$INIT` block or (3) no compartments have
+#' been registered in the model at the time `$PKMODEL` is processed (for
+#' example, via `$YAML`).
 #'
 #' @examples
 #' \dontrun{
@@ -818,7 +818,7 @@ handle_spec_block.specPKMODEL <- function(x, env, ...) {
 #' @md
 PKMODEL <- function(ncmt = 1, depot = FALSE, cmt = NULL, advan = NULL,
                     trans = NULL, env = list(), pos = 1, ...) {
-  
+
   if(is.numeric(advan)) {
     if(!(advan %in% c(1, 2, 3, 4, 11, 12))) {
       stop("advan must be 1, 2, 3, 4, 11, or 12.", call. = FALSE)
@@ -826,8 +826,8 @@ PKMODEL <- function(ncmt = 1, depot = FALSE, cmt = NULL, advan = NULL,
     # Non-depot compartments --------------------------------------------
     ncmt <- switch(
       as.character(advan),
-      "1"  = 1L,  "2" = 1L, 
-      "3"  = 2L,  "4" = 2L, 
+      "1"  = 1L,  "2" = 1L,
+      "3"  = 2L,  "4" = 2L,
       "11" = 3L, "12" = 3L
     )
     depot <- advan %in% c(2, 4, 12)
@@ -862,16 +862,16 @@ PKMODEL <- function(ncmt = 1, depot = FALSE, cmt = NULL, advan = NULL,
 
 ## Collect PKMODEL information; hopefully will be deprecating ADVAN2 and ADVAN4 soon
 collect_subr <- function(x, what = "PKMODEL") {
-  
+
   if("PRED" %in% names(x)) {
     ans <- list(advan = 0, trans = 0, n = 0)
     return(ans)
   }
-  
+
   ans <- list(advan = 13, trans = 1)
-  
+
   y <- x[names(x) %in% what]
-  
+
   if(length(y) >  1) {
     stop("Only one $PKMODEL block is allowed.",call.=FALSE)
   }
@@ -930,9 +930,9 @@ check_pred_symbols <- function(x,code) {
   p <- Pars(x)
   code <- unlist(get_tokens(code,TRUE))
   have <- unique(c(p,code))
-  
+
   if(x@trans==1) return(invisible(NULL))
-  
+
   need <- GLOBALS$ADVAN_PARMS[[as.character(x@advan)]]
   # assuming error checking has already processed for a valid advan,
   # however could add error check here with if (is.null(need)) {stop(...)}
@@ -948,7 +948,7 @@ check_pred_symbols <- function(x,code) {
 # nocov start
 #' @export
 handle_spec_block.specYAML <- function(x, env, ...) {
-  
+
   if(!requireNamespace("yaml", quietly = TRUE)) {
     stop(
       "the yaml package must be installed to process YAML blocks.",
@@ -956,7 +956,7 @@ handle_spec_block.specYAML <- function(x, env, ...) {
     )
   }
   pos <- attr(x,"pos")
-  x <- paste0(x, collapse = "\n")  
+  x <- paste0(x, collapse = "\n")
   x <- yaml::yaml.load(x, eval.expr = TRUE)
   annotated3 <- function(value = 0, descr = '.', unit = '.') {
     tibble(value = value, descr = descr, unit = unit)
@@ -966,9 +966,9 @@ handle_spec_block.specYAML <- function(x, env, ...) {
   }
   handle_annotated <- function(data, what, block) {
     x <- lapply(data, as.list)
-    x <- lapply(x, FUN = do.call, what = what) 
+    x <- lapply(x, FUN = do.call, what = what)
     x <- bind_rows(x)
-    label <-  names(data) 
+    label <-  names(data)
     if(is.null(label) & is.character(data)) label <- data
     mutate(x, block = block, name = label)
   }
@@ -1015,10 +1015,10 @@ handle_spec_block.specODE <- function(x, env, ...) {
     x,
     def = list(audit = TRUE),
     allow_multiple = TRUE
-  ) 
+  )
   x <- con[["x"]]
   if(isTRUE(con[["code"]])) {
-    x <- eval(parse(text = x), envir = env$ENV)   
+    x <- eval(parse(text = x), envir = env$ENV)
   }
   re <- "\\bETA\\([0-9]+\\)"
   chk <- grepl(re, x)
@@ -1033,7 +1033,7 @@ handle_spec_block.specODE <- function(x, env, ...) {
     env[["param"]][[pos]] <- tolist(con[["param"]])
   }
   env[["audit_dadt"]] <- isTRUE(con[["audit"]])
-  
+
   handle_warn_int_div(x, env, pos)
 
 }
@@ -1044,7 +1044,7 @@ handle_spec_block.specODE <- function(x, env, ...) {
 handle_spec_block.specPREAMBLE <- function(x, env, ...) {
   pos <- attr(x, "pos")
   x <- dump_opts(x)
-  
+
   handle_warn_int_div(x, env, pos)
 
 }
@@ -1056,7 +1056,7 @@ handle_spec_block.specMAIN <- function(x,env,...) {
   pos <- attr(x, "pos")
   x <- scrape_opts(x, def = list(check_modeled_infusions = TRUE))
   env$check_modeled_infusions <- isTRUE(x$check_modeled_infusions)
-  
+
   handle_warn_int_div(x$x, env, pos)
 
 }
@@ -1083,9 +1083,9 @@ handle_SET <- function(spec) {
   incoming <- charmatch(names(ans), valid)
   bad <- which(is.na(incoming) | incoming == 0)
   if(!length(bad)) {
-    return(ans)  
+    return(ans)
   }
-  if(length(bad) > 1) { 
+  if(length(bad) > 1) {
     msg <- "The $SET block cannot handle these items:"
   } else {
     msg <- "The $SET block cannot handle this item:"

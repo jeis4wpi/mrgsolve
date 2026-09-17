@@ -90,11 +90,11 @@ check_vec_tol_slots <- function(x, scope = c("both", "rtol", "atol")) {
       if(no_names) {
         msg <- c(msg, "custom rtol vector is unnamed.")
       } else {
-        msg <- c(msg, "custom rtol vector is in the wrong order.")  
+        msg <- c(msg, "custom rtol vector is in the wrong order.")
       }
     }
   }
-  if(scope %in% c("both", "atol")) { 
+  if(scope %in% c("both", "atol")) {
     check_atol <- length(x@vec_atol) == n
     check_atol_names <- identical(names(x@vec_atol), cmts)
     no_names <- !is_named(x@vec_atol)
@@ -105,13 +105,13 @@ check_vec_tol_slots <- function(x, scope = c("both", "rtol", "atol")) {
       if(no_names) {
         msg <- c(msg, "custom atol vector is unnamed.")
       } else {
-        msg <- c(msg, "custom atol vector is in the wrong order.")  
+        msg <- c(msg, "custom atol vector is in the wrong order.")
       }
     }
   }
   if(is.null(msg)) return(invisible(TRUE))
   header <- "Problems were found in custom tolerance vectors:"
-  footer <- "Consider runing `reset_tol()` to start over."
+  footer <- "Consider running `reset_tol()` to start over."
   names(msg) <- "x"
   abort(message = header, body = msg, footer = footer)
 }
@@ -122,56 +122,56 @@ check_itol <- function(x) {
 }
 
 #' Customize tolerances for specific compartments
-#' 
+#'
 #' These functions update the relative or absolute tolerance values
-#' only for the custom tolerance configuration. 
-#' 
+#' only for the custom tolerance configuration.
+#'
 #' @param .x a model object.
 #' @param .rtol a named numeric list or vector, where names reference
-#' selected model compartments and relative tolerances for those 
-#' compartments; `custom_tol()` also accepts the name of an object in the 
-#' model environment to be used. 
+#' selected model compartments and relative tolerances for those
+#' compartments; `custom_tol()` also accepts the name of an object in the
+#' model environment to be used.
 #' @param .atol a named numeric list or vector, where names reference
-#' selected model compartments and absolute tolerances for those 
-#' compartments; `custom_tol()` also accepts the name of an object in the 
-#' model environment to be used.  
-#' @param .default the default tolerance value to use for compartments not 
-#' listed in `.rtol`, `.atol`, or `...`; if not supplied, the current scalar 
+#' selected model compartments and absolute tolerances for those
+#' compartments; `custom_tol()` also accepts the name of an object in the
+#' model environment to be used.
+#' @param .default the default tolerance value to use for compartments not
+#' listed in `.rtol`, `.atol`, or `...`; if not supplied, the current scalar
 #' value in `.x` will be used.
-#' @param .use `logical`; if `TRUE`, then a call to [use_custom_tol()] will be 
-#' made prior to return; if `FALSE`, a call to [use_scalar_tol()] will be made; 
-#' under expected use, the value for this argument is kept `TRUE`, so that 
-#' whenever tolerances are customized, they will be used in the next simulation 
-#' run. 
+#' @param .use `logical`; if `TRUE`, then a call to [use_custom_tol()] will be
+#' made prior to return; if `FALSE`, a call to [use_scalar_tol()] will be made;
+#' under expected use, the value for this argument is kept `TRUE`, so that
+#' whenever tolerances are customized, they will be used in the next simulation
+#' run.
 #' @param ... `name`/`value` pairs, where `name` references a model compartment
-#' and `value` is a new, numeric value to use for `rtol` or `atol`. 
-#' 
+#' and `value` is a new, numeric value to use for `rtol` or `atol`.
+#'
 #' @details
-#' New tolerance values can be supplied by either a named, numeric vector or 
-#' list via `.rtol` and `.atol` or via `...` or by both. If duplicate 
-#' compartment names are found in `...` and either `.rtol` or `.atol`, the value 
-#' passed via `...` will take precedence. 
-#' 
+#' New tolerance values can be supplied by either a named, numeric vector or
+#' list via `.rtol` and `.atol` or via `...` or by both. If duplicate
+#' compartment names are found in `...` and either `.rtol` or `.atol`, the value
+#' passed via `...` will take precedence.
+#'
 #' The `custom_tol()` function provides a mechanism for coding customized
 #' tolerances into the model file itself. Simply create named numeric lists
-#' or vectors for customized `rtol` or `atol` in a `$ENV` block. On loading 
+#' or vectors for customized `rtol` or `atol` in a `$ENV` block. On loading
 #' the model, call `custom_tol()` and supply the names of those objects as
-#' `.rtol` and `.atol`. 
-#' 
+#' `.rtol` and `.atol`.
+#'
 #' @return An updated model object.
-#' 
+#'
 #' @examples
 #' mod <- house()
 #' mod <- custom_rtol(mod, GUT = 1e-2, CENT = 1e-3)
-#' 
+#'
 #' new_tolerances <- c(GUT = 1e-4, RESP = 1e-5)
 #' mod <- custom_rtol(mod, new_tolerances, RESP = 1e-6)
-#' 
+#'
 #' @seealso [reset_tol()], [use_custom_tol()], [use_scalar_tol()], [get_tol()]
-#' 
+#'
 #' @name custom_tol
 #' @md
-#' @export 
+#' @export
 custom_tol <- function(.x, .rtol = NULL, .atol = NULL) {
   if(is.character(.rtol) && length(.rtol)==1) {
     .rtol <- get(.rtol, envir = env_get_env(.x), inherits = FALSE, mode = "numeric")
@@ -187,11 +187,11 @@ custom_tol <- function(.x, .rtol = NULL, .atol = NULL) {
 #' @rdname custom_tol
 #' @export
 custom_rtol <- function(.x, .rtol = list(), .default = NULL, .use = TRUE, ...) {
-  if(!is.mrgmod(.x)) mod_first() 
+  if(!is.mrgmod(.x)) mod_first()
   .x <- customize_tol(x = .x, val = .rtol, tol = "rtol", .default = .default, ...)
   if(isTRUE(.use)) {
-    .x <- use_custom_tol(.x)    
-  } 
+    .x <- use_custom_tol(.x)
+  }
   if(isFALSE(.use)) {
     .x <- use_scalar_tol(.x)
   }
@@ -202,10 +202,10 @@ custom_rtol <- function(.x, .rtol = list(), .default = NULL, .use = TRUE, ...) {
 #' @export
 custom_atol <- function(.x, .atol = list(), .default = NULL, .use = TRUE, ...) {
   if(!is.mrgmod(.x)) mod_first()
-  .x <- customize_tol(x = .x, val = .atol, tol = "atol", .default = .default, ...) 
+  .x <- customize_tol(x = .x, val = .atol, tol = "atol", .default = .default, ...)
   if(isTRUE(.use)) {
-    .x <- use_custom_tol(.x)    
-  } 
+    .x <- use_custom_tol(.x)
+  }
   if(isFALSE(.use)) {
     .x <- use_scalar_tol(.x)
   }
@@ -213,31 +213,31 @@ custom_atol <- function(.x, .atol = list(), .default = NULL, .use = TRUE, ...) {
 }
 
 #' Reset all model tolerances
-#' 
-#' These functions reset both scalar and customized values for both 
-#' relative and absolute tolerances. All functions reset tolerances to a single, 
-#' common `rtol` or `atol`.  The functions do _not_ change which tolerance 
-#' configuration is used for simulation (e.g., scalar or customized); see 
-#' [use_custom_tol()] and [use_scalar_tol()] to make that change in the model 
+#'
+#' These functions reset both scalar and customized values for both
+#' relative and absolute tolerances. All functions reset tolerances to a single,
+#' common `rtol` or `atol`.  The functions do _not_ change which tolerance
+#' configuration is used for simulation (e.g., scalar or customized); see
+#' [use_custom_tol()] and [use_scalar_tol()] to make that change in the model
 #' object.
-#' 
+#'
 #' @param x a model object.
 #' @param rtol global relative tolerance for both scalar and customized
-#' configurations; if not supplied, the current model's scalar `rtol` value is 
-#' used. 
+#' configurations; if not supplied, the current model's scalar `rtol` value is
+#' used.
 #' @param atol global absolute tolerance for both scalar and customized
-#' configurations; if not supplied, the current model's scalar `atol` value is 
-#' used. 
-#' 
+#' configurations; if not supplied, the current model's scalar `atol` value is
+#' used.
+#'
 #' @return An updated model object.
-#' 
+#'
 #' @examples
 #' mod <- house()
 #' mod <- reset_tol(mod, rtol = 1e-6, atol = 1e-10)
 #' mod
-#' 
+#'
 #' @seealso [custom_tol()], [use_custom_tol()], [use_scalar_tol()], [get_tol()]
-#' 
+#'
 #' @name reset_tol
 #' @md
 #' @export
@@ -258,7 +258,7 @@ reset_tol <- function(x, rtol = NULL, atol = NULL) {
 reset_rtol <- function(x, rtol = NULL) {
   if(!is.mrgmod(x)) mod_first()
   if(!is.numeric(rtol)) {
-    rtol <- x@rtol  
+    rtol <- x@rtol
   }
   x@vec_rtol <- numeric(0)
   x <- update(x, rtol = rtol)
@@ -271,7 +271,7 @@ reset_rtol <- function(x, rtol = NULL) {
 reset_atol <- function(x, atol = NULL) {
   if(!is.mrgmod(x)) mod_first()
   if(!is.numeric(atol)) {
-    atol <- x@atol  
+    atol <- x@atol
   }
   x@vec_atol <- numeric(0)
   x <- update(x, atol = atol)
@@ -281,18 +281,18 @@ reset_atol <- function(x, atol = NULL) {
 
 
 #' Extract rtol and atol information from a model object
-#' 
+#'
 #' @param x a model object.
-#' 
+#'
 #' @return A data frame (`get_tol()`) or a named list (`get_tol_list()`).
-#' 
+#'
 #' @examples
 #' mod <- house()
 #' get_tol(mod)
 #' get_tol_list(mod)
-#' 
+#'
 #' @seealso [reset_tol()], [custom_tol()], [use_custom_tol()], [use_scalar_tol()]
-#' 
+#'
 #' @name get_tol
 #' @md
 #' @export
@@ -301,22 +301,22 @@ get_tol <- function(x) {
   rtol <- x@vec_rtol
   atol <- x@vec_atol
   if(!length(rtol)) {
-    rtol <- rep(NA_real_, neq(x))  
+    rtol <- rep(NA_real_, neq(x))
   } else {
-    check_vec_tol_slots(x, "rtol")  
+    check_vec_tol_slots(x, "rtol")
   }
   if(!length(atol)) {
-    atol <- rep(NA_real_, neq(x))   
+    atol <- rep(NA_real_, neq(x))
   } else {
-    check_vec_tol_slots(x, "atol")  
+    check_vec_tol_slots(x, "atol")
   }
   data.frame(
     cmt = Cmt(x),
-    custom_rtol = rtol, 
-    custom_atol = atol, 
-    scalar_rtol = x@rtol, 
-    scalar_atol = x@atol, 
-    row.names = NULL, 
+    custom_rtol = rtol,
+    custom_atol = atol,
+    scalar_rtol = x@rtol,
+    scalar_atol = x@atol,
+    row.names = NULL,
     stringsAsFactors = FALSE
   )
 }
@@ -330,38 +330,38 @@ get_tol_list <- function(x) {
   data$cmt <- NULL
   l <- as.list(data)
   l <- lapply(as.list(data), function(tol) {
-    setNames(as.list(tol), cmt)  
+    setNames(as.list(tol), cmt)
   })
   l
 }
 
 #' Set up a model object to use either scalar or custom tolerances
-#' 
-#' Call `use_custom_tol()` to use custom relative and absolute tolerances in 
+#'
+#' Call `use_custom_tol()` to use custom relative and absolute tolerances in
 #' a model; call `use_scalar_tol()` to revert to the traditional configuration
-#' where a single `rtol` and `atol` are applied to all compartments. 
-#' 
+#' where a single `rtol` and `atol` are applied to all compartments.
+#'
 #' @param x a model object.
-#' 
+#'
 #' @return An updated model object.
-#' 
+#'
 #' @details
 #' If customized tolerances have not been initialized yet, they will be,
 #' assigning the current `rtol` or `atol` for every compartment. These default
-#' values can be updated using [custom_rtol()], [custom_atol()], or 
+#' values can be updated using [custom_rtol()], [custom_atol()], or
 #' [custom_tol()].
-#' 
+#'
 #' @examples
 #' mod <- house()
-#' 
+#'
 #' mod <- use_custom_tol(mod)
 #' mod
-#' 
+#'
 #' mod <- use_scalar_tol(mod)
 #' mod
-#' 
+#'
 #' @seealso [custom_tol()], [reset_tol()], [get_tol()]
-#' 
+#'
 #' @md
 #' @export
 use_custom_tol <- function(x) {
@@ -376,6 +376,6 @@ use_custom_tol <- function(x) {
 #' @export
 use_scalar_tol <- function(x) {
   if(!is.mrgmod(x)) mod_first()
-  x@itol <- 1  
+  x@itol <- 1
   x
 }

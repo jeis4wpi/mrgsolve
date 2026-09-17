@@ -1,36 +1,36 @@
 /*
- * Please see the full history of this code, including below. 
- * 
+ * Please see the full history of this code, including below.
+ *
  * LSODA.cpp and LSODA.h were obtained from
  * https://github.com/dilawar/libsoda
- * in September, 2019 and incorporated into mrgsolve with 
- * minor modifications. 
- * 
- * Modifications: 
- * - Added several members that were previously being passed in to 
+ * in September, 2019 and incorporated into mrgsolve with
+ * minor modifications.
+ *
+ * Modifications:
+ * - Added several members that were previously being passed in to
  *   lsoda_update().
  * - Added several functions for setting new members.
  * - Replaced fprint statements to REfprint for CRAN compliance.
  * - Replaced output to cerr with REfprint.
- * - Added Rcpp::exception when terminate or terminate2 are called. 
+ * - Added Rcpp::exception when terminate or terminate2 are called.
  * - Removed assert stataements for CRAN compliance
  * - int and double members explicitly initialized mrgsolve #546
  * - changed dgesl to dgesl1 and dgefa to dgefa1
  * - fixed a big where pointer to ncf got incremented mrgsolve #542
- * 
+ *
  */
 
 /*
  * HISTORY:
  * This is a CPP version of the LSODA library for integration into MOOSE
- somulator.
- * The original was aquired from
+ simulator.
+ * The original was acquired from
  * http://www.ccl.net/cca/software/SOURCES/C/kinetics2/index.shtml and modified
  by
  * Heng Li <lh3lh3@gmail.com>. Heng merged several C files into one and added a
  * simpler interface. [Available
  here](http://lh3lh3.users.sourceforge.net/download/lsoda.c)
- 
+
  * The original source code came with no license or copyright
  * information. Heng Li released his modification under the MIT/X11 license. I
  * maintain the same license. I have removed quite a lot of text/comments from
@@ -88,7 +88,7 @@ LSODA::LSODA(int neq_, const Rcpp::S4& mod) {
   mxhnil_(Rcpp::as<int>(mod.slot("mxhnil")));
   Rtol = Rcpp::as<double>(mod.slot("rtol"));
   Atol = Rcpp::as<double>(mod.slot("atol"));
-  itol = Rcpp::as<int>(mod.slot("itol")); 
+  itol = Rcpp::as<int>(mod.slot("itol"));
   if(itol>1) {
     setup_tol_vectors(mod);
   } else {
@@ -113,36 +113,36 @@ LSODA::LSODA(int neq_, const Rcpp::S4& mod) {
  * @Param _data
  */
 /* ----------------------------------------------------------------------------*/
-void LSODA::lsoda_update(LSODA_ODE_SYSTEM_TYPE f, 
+void LSODA::lsoda_update(LSODA_ODE_SYSTEM_TYPE f,
                          const int neq,
-                         vector<double>& y, 
-                         vector<double>& yout, 
+                         vector<double>& y,
+                         vector<double>& yout,
                          double *t,
-                         const double tout, 
+                         const double tout,
                          int *istate,
                          dtype const _data)
 {
   // array<int, 7> iworks = {{0}};
   // array<double, 4> rworks = {{0.0}};
-  
+
   if(*t==tout || neq < 1) return;
-  
+
   // int itask, iopt, jt;
-  // 
+  //
   // itask = 1;
   // iopt = 0;
   // jt = 2;
-  
+
   // Fill-in values.
   // for (size_t i = 1; i <= neq; ++i) {
   //   yout[i] = y[i - 1];
   // }
   std::copy(y.begin(), y.end(), 1+yout.begin());
-  
+
   lsoda(f, neq, yout, t, tout, itask, istate, iopt, jt, _data);
-  
+
   std::copy(1+yout.begin(), yout.end(), y.begin());
-  // 
+  //
   // for(size_t i = 1; i <= neq; ++i) {
   //   y[i - 1] = yout[i];
   // }
@@ -153,15 +153,15 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
                   int jt, dtype _data)
 {
   //assert(tout > *t);
-  
+
   int mxstp0 = 500, mxhnl0 = 10;
-  
+
   int iflag = 0, lenyh = 0, ihit = 0;
-  
+
   double atoli = 0, ayi = 0, big = 0, h0 = 0, hmax = 0, hmx = 0, rh = 0,
     rtoli = 0, tcrit = 0, tdist = 0, tnext = 0, tol = 0, tolsf = 0, tp = 0,
     size = 0, sum = 0, w0 = 0;
-  
+
   /*
    Block a.
    This code block is executed on every call.
@@ -170,7 +170,7 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
    yet been done, an error return occurs.
    If *istate = 1 and tout = t, return immediately.
    */
-  
+
   if (*istate < 1 || *istate > 3)
   {
     // fprintf(stderr, "[lsoda] illegal istate = %d\n", *istate);
@@ -192,23 +192,23 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
     terminate(istate);
     return;
   }
-  
+
   /*
    Block b.
    The next code block is executed for the initial call ( *istate = 1 ),
    or for a continuation call with parameter changes ( *istate = 3 ).
    It contains checking of all inputs and various initializations.
-   
+
    First check legality of the non-optional inputs neq, itol, iopt,
    jt, ml, and mu.
    */
-  
+
   if (*istate == 1 || *istate == 3)
   {
     ntrep = 0;
     if (neq <= 0)
     {
-      Rcpp::Rcerr << "[lsoda] neq = " << neq << " is less than 1." 
+      Rcpp::Rcerr << "[lsoda] neq = " << neq << " is less than 1."
                   << std::endl;
       //REprintf("[lsoda] neq = %zu is less than 1.\n", neq);
       terminate(istate);
@@ -258,14 +258,14 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
       }
       if (mu >= n)
       {
-        Rcpp::Rcerr << "[lsoda] mu = " << mu << " not between 1 and neq." 
+        Rcpp::Rcerr << "[lsoda] mu = " << mu << " not between 1 and neq."
                     << std::endl;
         //REprintf("[lsoda] mu = %zu not between 1 and neq.\n", mu);
         terminate(istate);
         return;
       }
     }
-    
+
     /* Next process and check the optional inpus.   */
     /* Default options.   */
     if (iopt == 0)
@@ -294,35 +294,35 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
         terminate(istate);
         return;
       }
-      
+
       mxstep = iworks[3];
       if (mxstep == 0)
         mxstep = mxstp0;
       mxhnil = iworks[4];
-      
+
       if (*istate == 1)
       {
         h0 = rworks[1];
         mxordn = iworks[5];
-        
+
         if (mxordn == 0)
           mxordn = 100; // 12
         //mxordn = 100;
-        
+
         mxordn = min(mxordn, mord[0]);
         mxords = iworks[6];
-        
+
         // if mxords is not given use 100.
         if (mxords == 0)
           mxords = 100; // 5
         //mxords = 100;
         mxords = min(mxords, mord[1]);
-        
+
         if ((tout - *t) * h0 < 0.)
         {
           // cerr << "[lsoda] tout = " << tout << " behind t = " << *t
           //      << ". integration direction is given by " << h0 << endl;
-          REprintf("[lsoda] tout = %f behind t = %f integration direction is given by %f.\n", 
+          REprintf("[lsoda] tout = %f behind t = %f integration direction is given by %f.\n",
                    tout, *t, h0);
           terminate(istate);
           return;
@@ -339,7 +339,7 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
       hmxi = 0.;
       if (hmax > 0)
         hmxi = 1. / hmax;
-      
+
       hmin = rworks[3];
       if (hmin < 0.)
       {
@@ -352,7 +352,7 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
   }                    /* end if ( *istate == 1 || *istate == 3 )   */
     /*
      If *istate = 1, meth_ is initialized to 1.
-     
+
      Also allocate memory for yh_, wm_, ewt, savf, acor, ipvt.
      */
     if (*istate == 1)
@@ -363,10 +363,10 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
        */
       sqrteta = sqrt(ETA);
       meth_ = 1;
-      
+
       nyh = n;
       lenyh = 1 + max(mxordn, mxords);
-      
+
       yh_.resize(lenyh + 1, std::vector<double>(nyh + 1, 0.0));
       wm_.resize(nyh + 1, std::vector<double>(nyh + 1, 0.0));
       ewt.resize(1 + nyh, 0);
@@ -403,7 +403,7 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
         }
       } /* end for   */
     }   /* end if ( *istate == 1 || *istate == 3 )   */
-    
+
     /* If *istate = 3, set flag to signal parameter changes to stoda. */
     if (*istate == 3)
     {
@@ -434,7 +434,7 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
         if (h0 != 0. && (*t + h0 - tcrit) * h0 > 0.)
           h0 = tcrit - *t;
       }
-      
+
       jstart = 0;
       nhnil = 0;
       nst = 0;
@@ -448,22 +448,22 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
       maxcor = 3;
       msbp = 20;
       mxncf = 10;
-      
+
       /* Initial call to f.  */
       if(int(yh_.size()) != (lenyh + 1)) {
-        Rcpp::stop("[lsoda] inputs are not the right size.");  
+        Rcpp::stop("[lsoda] inputs are not the right size.");
       }
       if(yh_[0].size() != (nyh + 1)) {
-        Rcpp::stop("[lsoda] inputs are not the right size."); 
+        Rcpp::stop("[lsoda] inputs are not the right size.");
       }
-      
+
       (*f)(*t, &y[1], &yh_[2][1], _data);
       nfe = 1;
-      
+
       /* Load the initial value vector in yh_.  */
       for (size_t i = 1; i <= n; ++i)
         yh_[1][i] = y[i];
-      
+
       /* Load and invert the ewt array.  ( h_ is temporarily set to 1. ) */
       nq = 1;
       h_ = 1.;
@@ -472,7 +472,7 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
       {
         if (ewt[i] <= 0.)
         {
-          Rcpp::Rcerr << "[lsoda] ewt[" << i << "] = " << ewt[i] << " <= 0." 
+          Rcpp::Rcerr << "[lsoda] ewt[" << i << "] = " << ewt[i] << " <= 0."
                       << std::endl;
           //REprintf("[lsoda] ewt[%zu] = %g <= 0.\n", i, ewt[i]);
           terminate2(y, t);
@@ -480,7 +480,7 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
         }
         ewt[i] = 1. / ewt[i];
       }
-      
+
       /*
        The coding below computes the step size, h0, to be attempted on the
        first step, unless the user has supplied a value for this.
@@ -489,15 +489,15 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
        if this is positive, or max(atol[i]/fabs(y[i])) otherwise, adjusted
        so as to be between 100*ETA and 0.001.
        Then the computed value h0 is given by
-       
+
        h0^(-2) = 1. / ( tol * w0^2 ) + tol * ( norm(f) )^2
-       
+
        where   w0     = max( fabs(*t), fabs(tout) ),
        f      = the initial value of the vector f(t,y), and
        norm() = the weighted vector norm used throughout, given by
        the vmnorm function routine, and weighted by the
        tolerances initially loaded into the ewt array.
-       
+
        The sign of h0 is inferred from the initial values of tout and *t.
        fabs(h0) is made < fabs(tout-*t) in any case.
        */
@@ -544,7 +544,7 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
       rh = fabs(h0) * hmxi;
       if (rh > 1.)
         h0 /= rh;
-      
+
       /*
        Load h_ with h0 and scale yh_[2] by h0.
        */
@@ -664,9 +664,9 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
        Block e.
        The next block is normally executed for all calls and contains
        the call to the one-step core integrator stoda.
-       
+
        This is a looping point for the integration steps.
-       
+
        First check for too many steps being taken, update ewt ( if not at
        start of problem).  Check for too much accuracy being requested, and
        check for h_ below the roundoff level in *t.
@@ -677,23 +677,23 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
         {
           if ((nst - nslast) >= mxstep)
           {
-            Rcpp::Rcerr << "[lsoda] " << mxstep 
-                        << " steps taken before reaching tout;" 
+            Rcpp::Rcerr << "[lsoda] " << mxstep
+                        << " steps taken before reaching tout;"
                         << " consider increasing maxsteps."
                         << std::endl;
-            //REprintf("[lsoda] %zu steps taken before reaching tout; consider increasing maxsteps.\n", 
+            //REprintf("[lsoda] %zu steps taken before reaching tout; consider increasing maxsteps.\n",
             //         mxstep);
             *istate = -1;
             terminate2(y, t);
             return;
           }
-          
+
           ewset(yh_[1]);
           for (size_t i = 1; i <= n; ++i)
           {
             if (ewt[i] <= 0.)
             {
-              Rcpp::Rcerr << "[lsoda] ewt[" << i << "] = " << ewt[i] 
+              Rcpp::Rcerr << "[lsoda] ewt[" << i << "] = " << ewt[i]
                           << " <= 0." << std::endl;
               //REprintf("[lsoda] ewt[%zu] = %g <= 0.\n", i, ewt[i]);
               *istate = -6;
@@ -728,7 +728,7 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
           terminate2(y, t);
           return;
         }
-        
+
         if ((tn_ + h_) == tn_)
         {
           nhnil++;
@@ -743,20 +743,20 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
             REprintf("[lsoda] warning..internal t = %g and h_ = %g are\n",  tn_, h_);
             REprintf("        such that in the machine, t + h_ = t on the next step\n");
             REprintf("        solver will continue anyway.\n");
-            
-            
+
+
             if (nhnil == mxhnil)
             {
               Rcpp::Rcerr << "[lsoda] above warning has been issued " << nhnil
                           << " times, " << std::endl
-                          << "        it will not be issued again for this problem." 
+                          << "        it will not be issued again for this problem."
                           << std::endl;
               // REprintf("[lsoda] above warning has been issued %zu times\n", nhnil);
               // REprintf("        it will not be issued again for this problem.\n");
             }
           }
         }
-        
+
         /* Call stoda */
         stoda(neq, y, f, _data);
         if (kflag == 0)
@@ -798,7 +798,7 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
           {
             if ((tn_ - tout) * h_ < 0.)
               continue;
-            
+
             intdy(tout, 0, y, &iflag);
             *t = tout;
             *istate = 2;
@@ -911,9 +911,8 @@ void LSODA::lsoda(LSODA_ODE_SYSTEM_TYPE f, const size_t neq, vector<double> &y,
           } /* end if ( kflag == -1 || kflag == -2 )   */
       }   /* end while   */
 } /* end lsoda   */
-          
-          
+
+
           void LSODA::_freevectors(void) {
             // Does nothing. USE c++ memory mechanism here.
           }
-

@@ -78,10 +78,10 @@ numeric2diag <- function(x,context=NULL) {
 ##' @param use logical; if FALSE, all matrix elements are set to 0
 ##' @param block logical; if TRUE, try to make a block matrix; diagonal
 ##' otherwise
-##' @param correlation logical; if TRUE, off diagonal elements are assumed to 
+##' @param correlation logical; if TRUE, off diagonal elements are assumed to
 ##' be correlations and converted to covariances; if correlation is TRUE, then
 ##'  block is set to TRUE
-##' @param digits if value of this argument is greater than zero, the matrix 
+##' @param digits if value of this argument is greater than zero, the matrix
 ##' is passed to signif (along with digits) prior to returning
 ##' @param context the working context
 ##' @param ... passed along
@@ -104,9 +104,9 @@ modMATRIX <- function(x,
                       digits=-1,
                       context="matlist",
                       ...) {
-  
+
   if(length(x)==0 | is.null(x)) return(matrix(nrow=0,ncol=0))
-  
+
   if(correlation) block <- TRUE
   if(is.character(x)) x <- cvec_cs(x)
   x <- x[x!=""]
@@ -131,24 +131,24 @@ Diag <- function(x) {
 }
 
 #' Create matrices from vector input
-#' 
-#' These functions are simple utilities for creating diagonal, block or 
-#' correlation matrices. 
-#' 
+#'
+#' These functions are simple utilities for creating diagonal, block or
+#' correlation matrices.
+#'
 #' @param ... matrix data.
-#' @param correlation logical; if `TRUE`, off-diagonal elements are assumed 
+#' @param correlation logical; if `TRUE`, off-diagonal elements are assumed
 #' to be correlations and converted to covariances.
-#' @param digits if greater than zero, matrix is passed to [signif()] (along 
+#' @param digits if greater than zero, matrix is passed to [signif()] (along
 #' with digits) prior to returning.
-#' 
+#'
 #' @details
-#' `bmat()` makes a block matrix. `cmat()` makes a correlation matrix. 
+#' `bmat()` makes a block matrix. `cmat()` makes a correlation matrix.
 #' `dmat()` makes a diagonal matrix.
-#' 
+#'
 #' @return A matrix.
-#' 
+#'
 #' @seealso [as_bmat()], [as_dmat()]
-#' 
+#'
 #' @examples
 #'
 #' dmat(1,2,3)/10
@@ -156,7 +156,7 @@ Diag <- function(x) {
 #' bmat(0.5,0.01,0.2)
 #'
 #' cmat(0.5, 0.87,0.2)
-#' 
+#'
 #' @rdname matrix_helpers
 #' @name matrix_helpers
 #' @md
@@ -181,35 +181,35 @@ dmat <- function(...) {
 }
 
 #' Coerce R objects to block or diagonal matrices
-#' 
+#'
 #' These are simple functions that may be helpful to create the matrix objects
 #' that mrgsolve expects.  Functions are named based on whether they create a
 #' diagonal matrix (`d`), a block matrix (`b`), or a a correlation
 #' matrix (`c`).
-#' 
 #'
-#' @param x data frame or list. 
+#'
+#' @param x data frame or list.
 #' @param pat regular expression, character.
 #' @param cols column names to use instead of `pat`.
 #' @param ... arguments passed to [dmat()] or [cmat()].
-#' 
-#' @return A numeric matrix for list and numeric methods.  For data.frames, 
+#'
+#' @return A numeric matrix for list and numeric methods.  For data.frames,
 #' a list of matrices are returned.
-#' 
+#'
 #' @seealso [bmat()], [dmat()], [cmat()]
-#' 
+#'
 #' @details
 #' Use `as_dmat()` to create a diagonal matrix, `as_bmat()`
-#' to create a block matrix, and `as_cmat()` to create a block 
+#' to create a block matrix, and `as_cmat()` to create a block
 #' matrix where off-diagonal elements are understood to be correlations
-#' rather than covariances. `as_cmat()` uses `as_bmat()` to 
-#' form the matrix and then converts off-diagonal elements to 
+#' rather than covariances. `as_cmat()` uses `as_bmat()` to
+#' form the matrix and then converts off-diagonal elements to
 #' covariances before returning.
-#' 
+#'
 #' The methods for `data.frame` will work down the rows
-#' of the data frame and make the appropriate matrix from 
-#' the data in each row.  The result is a list of matrices. 
-#' 
+#' of the data frame and make the appropriate matrix from
+#' the data in each row.  The result is a list of matrices.
+#'
 #' @examples
 #' df <- data.frame(
 #'   OMEGA1.1 = c(1,2),
@@ -224,7 +224,7 @@ dmat <- function(...) {
 #' as_dmat(df[1,],"OMEGA")
 #'
 #' @rdname matrix_converters
-#' 
+#'
 #' @md
 #' @export
 setGeneric("as_bmat", function(x,...) standardGeneric("as_bmat"))
@@ -248,7 +248,7 @@ setMethod("as_bmat", "data.frame", function(x,pat="*",cols=NULL, ...) {
   if(is.character(cols)) {
     cols <- cvec_cs(cols)
     if(!all(cols %in% names(x))) {
-      stop("Invalid colums in cols argument.") 
+      stop("Invalid columns in cols argument.")
     }
     cols <- names(x) %in% cols
   } else {
@@ -293,7 +293,7 @@ setMethod("as_dmat", "data.frame", function(x,pat="*",cols=NULL, ...) {
   if(is.character(cols)) {
     cols <- cvec_cs(cols)
     if(!all(cols %in% names(x))) {
-      stop("Invalid colums in cols argument.") 
+      stop("Invalid columns in cols argument.")
     }
     cols <- names(x) %in% cols
   } else {

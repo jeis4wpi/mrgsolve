@@ -32,11 +32,11 @@ iv <- function(dose,par,time) {
   par <- as.list(par)
   par$K <- par$CL/par$VC
   with(par, (dose/VC)*exp(-K*time))
-  
+
 }
 
 
-mod <- mrgsolve::house() %>% 
+mod <- mrgsolve::house() %>%
   update(atol = 1E-20, rtol = 1E-12, digits = 8)
 
 out <- mrgsim(mod)
@@ -64,7 +64,6 @@ test_that("CP from iv model is identical to closed form result", {
   expect_true(all(compareiv == outiv$CP))
 })
 
-test_that("Error on dosing into non-existant compartment", {
+test_that("Error on dosing into non-existent compartment", {
   expect_error(mod %>% ev(amt = 100, cmt = 1000) %>% mrgsim())
 })
-
